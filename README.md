@@ -34,6 +34,19 @@ O catálogo da vitrine é a fonte dos cards e das versões. O processo de releas
 
 O compilador NSIS portátil vem do canal oficial e fica em `.tools/` ignorado. Executáveis gerados ficam em `dist/` do app e não são enviados pelo sincronizador. Um certificado de assinatura digital Windows não acompanha este projeto: o instalador não anuncia um editor verificado. Não confundir assinatura do editor Windows com a assinatura Android.
 
+Com o build Windows Release pronto e NSIS 3.13 em `.tools/nsis-3.13`, execute na raiz deste repositório:
+
+```powershell
+py -3 tool/build-installer.py ../chain_app --name Chain
+py -3 tool/prepare-android.py ../chain_app --name Chain --sdk "$env:LOCALAPPDATA/Android/Sdk" --java-home "C:/Program Files/Android/Android Studio/jbr"
+```
+
+Substitua o projeto e nome pelo produto correspondente. O primeiro comando confere a versão real do executável e inclui o runtime C++ local. O segundo confere os três APKs Release, versão, ABI, certificado esperado, permissão INTERNET e alinhamento ZIP de 16 KiB antes de copiar. Outro certificado exige `--certificate` explícito, obtido da versão anterior distribuída. O manifesto Android principal precisa da permissão INTERNET para consultar o feed em Release. Os relatórios e pacotes ficam no `dist/<versão>/` do app, ignorado pelo Git.
+
+Em outro PC, inclua `update` na seleção de projetos para recuperar estas ferramentas. SDKs, NSIS e chaves não passam pelo sincronizador. O instalador usa um caminho estável a partir da primeira instalação; uma versão antiga extraída de ZIP precisa da primeira instalação manual. Dados de suporte continuam no mesmo diretório de cada aplicativo.
+
+`tool/publish-release.py` publica os pacotes verificados somente após autorização explícita para a distribuição. Não faz parte do sync ou do build. Os arquivos devem estar públicos e verificados antes de mudar o catálogo. `dart tool/check_feed.dart` valida o feed HTTPS real com o mesmo cliente distribuído nos apps.
+
 ## Validar
 
 ```powershell
