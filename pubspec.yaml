@@ -1,0 +1,16 @@
+name: clustter_update
+description: "Protocolo Update da Clustter cores: aviso local e download pelo site."
+version: 1.0.0
+publish_to: none
+environment:
+  sdk: ^3.12.1
+dependencies:
+  flutter:
+    sdk: flutter
+  package_info_plus: 10.2.2
+  path_provider: 2.1.6
+  url_launcher: 6.3.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

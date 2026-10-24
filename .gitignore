@@ -1,0 +1,14 @@
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+dist/
+artifacts/
+.local/
+.tools/
+*.exe
+*.zip
+*.apk
+*.log
+*.key
+*.keystore
+.env*
