@@ -13,6 +13,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 from pathlib import Path
 
 REPO = "vacilao38/clustter-cores-downloads"
@@ -23,21 +24,41 @@ def main():
     parser.add_argument("project", type=Path)
     parser.add_argument("--name", required=True)
     parser.add_argument("--publish", action="store_true", help="Make the verified release public after uploading")
+    parser.add_argument("--browser", action="store_true", help="Verified Chain Companion ZIP instead of native app packages")
+    parser.add_argument("--notes-file", type=Path)
+    parser.add_argument("--title")
     args = parser.parse_args()
     project = args.project.resolve()
-    pubspec = (project / "pubspec.yaml").read_text(encoding="utf-8")
-    app_id = re.search(r"(?m)^name:\s*([a-z][a-z0-9_]*)\s*$", pubspec)[1]
-    version = re.search(r"(?m)^version:\s*(\d+\.\d+\.\d+)\+\d+\s*$", pubspec)[1]
-    if app_id not in {"folk", "lake", "chain", "noon", "pile"}:
-        raise ValueError("New catalog products require explicit publication authorization and tooling registration")
-    folder = project / f"dist/{version}"
-    installer = json.loads((folder / "installer.json").read_text(encoding="utf-8"))
-    android = json.loads((folder / "android.json").read_text(encoding="utf-8"))
-    if (installer["testBuild"] or installer["version"] != version
-            or android["version"] != version or not android["verified"]
-            or not android.get("internetPermission")):
-        raise ValueError("Only verified release artifacts can be distributed")
-    expected = [installer, *android["assets"]]
+    if args.browser:
+        package = json.loads((project / "package.json").read_text(encoding="utf-8"))
+        if package["name"] != "chain-companion" or not args.notes_file:
+            raise ValueError("Browser distribution requires the selected Companion and release notes")
+        app_id, version = "chain-extension", package["version"]
+        if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+            raise ValueError("Invalid browser version")
+        folder = project / f"dist/{version}"
+        report = json.loads((folder / "package.json").read_text(encoding="utf-8"))
+        if report["app"] != app_id or report["version"] != version or report["file"] != f"Chain-Companion-{version}-Chrome-Edge.zip":
+            raise ValueError("Stale browser package")
+        with zipfile.ZipFile(folder / report["file"]) as archive:
+            manifest = json.loads(archive.read("manifest.json"))
+            if manifest["version"] != version or manifest["manifest_version"] != 3:
+                raise ValueError("Wrong browser manifest")
+        expected = [report]
+    else:
+        pubspec = (project / "pubspec.yaml").read_text(encoding="utf-8")
+        app_id = re.search(r"(?m)^name:\s*([a-z][a-z0-9_]*)\s*$", pubspec)[1]
+        version = re.search(r"(?m)^version:\s*(\d+\.\d+\.\d+)\+\d+\s*$", pubspec)[1]
+        if app_id not in {"folk", "lake", "chain", "noon", "pile"}:
+            raise ValueError("New catalog products require explicit publication authorization and tooling registration")
+        folder = project / f"dist/{version}"
+        installer = json.loads((folder / "installer.json").read_text(encoding="utf-8"))
+        android = json.loads((folder / "android.json").read_text(encoding="utf-8"))
+        if (installer["testBuild"] or installer["version"] != version
+                or android["version"] != version or not android["verified"]
+                or not android.get("internetPermission")):
+            raise ValueError("Only verified release artifacts can be distributed")
+        expected = [installer, *android["assets"]]
     files = []
     for asset in expected:
         file = folder / asset["file"]
@@ -78,8 +99,10 @@ def main():
         "Instaladores/APKs compilados, versões, certificados, arquiteturas e hashes conferidos. Testes automatizados aprovados; uso em Android físico permanece pendente. "
         "Instalador Windows sem certificado de editor verificado; APKs preservam a assinatura pessoal de desenvolvimento. Veja requisitos e limites de cada app na Clustter.\n\n"
         "Confira SHA256SUMS.txt. Este release não inclui código-fonte privado ou dados de uso.\n\n<!-- clustter-update-release-v1 -->")
+    if args.notes_file:
+        body = args.notes_file.read_text(encoding="utf-8") + "\n\n<!-- clustter-update-release-v1 -->"
     if release is None:
-        release = api("POST", f"/repos/{REPO}/releases", {"tag_name": tag, "name": f"{args.name} {version} · Update e instalador Windows",
+        release = api("POST", f"/repos/{REPO}/releases", {"tag_name": tag, "name": args.title or f"{args.name} {version} · Update e instalador Windows",
             "body": body, "draft": True, "prerelease": False, "make_latest": "false"})
     if "<!-- clustter-update-release-v1 -->" not in (release.get("body") or ""):
         raise ValueError("Existing release wasn't created by this operation; preserve it")

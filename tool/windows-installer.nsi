@@ -94,6 +94,10 @@ Section "${APP_NAME}"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClustterCore.${REG_ID}" "NoModify" 1
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClustterCore.${REG_ID}" "NoRepair" 1
 !ifndef TEST_BUILD
+!ifdef BROWSER_HOST
+  WriteRegStr HKCU "Software\Google\Chrome\NativeMessagingHosts\com.clustter.chain" "" "$INSTDIR\chain-browser-host.json"
+  WriteRegStr HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.clustter.chain" "" "$INSTDIR\chain-browser-host.json"
+!endif
   CreateDirectory "$SMPROGRAMS\Clustter cores"
   CreateShortcut "$SMPROGRAMS\Clustter cores\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
 !endif
@@ -101,6 +105,18 @@ SectionEnd
 
 Section "Uninstall"
   Call un.EnsureClosed
+!ifndef TEST_BUILD
+!ifdef BROWSER_HOST
+  ReadRegStr $0 HKCU "Software\Google\Chrome\NativeMessagingHosts\com.clustter.chain" ""
+  ${If} $0 == "$INSTDIR\chain-browser-host.json"
+    DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\com.clustter.chain"
+  ${EndIf}
+  ReadRegStr $0 HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.clustter.chain" ""
+  ${If} $0 == "$INSTDIR\chain-browser-host.json"
+    DeleteRegKey HKCU "Software\Microsoft\Edge\NativeMessagingHosts\com.clustter.chain"
+  ${EndIf}
+!endif
+!endif
   ; Generated exact file list: never recursively delete an install/user folder.
   !include "${UNINSTALL_FILES}"
   Delete "$INSTDIR\uninstall.exe"

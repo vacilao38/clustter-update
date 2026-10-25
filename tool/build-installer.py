@@ -94,6 +94,16 @@ def main() -> None:
         "APP_NAME": args.name, "APP_EXE": exe.name, "APP_VERSION": version,
         "NUMERIC_VERSION": f"{version}.{build}", "OUTPUT": str(output),
         "PAYLOAD": str(payload), "UNINSTALL_FILES": str(uninstall)}
+    if app_id == "chain":
+        host = payload / "chain-browser-host.json"
+        if not host.is_file() or not (payload / "chain_browser_host.exe").is_file():
+            raise ValueError("Run Chain tool/prepare-browser.ps1 before packaging")
+        config_host = json.loads(host.read_text(encoding="utf-8"))
+        if (config_host.get("name") != "com.clustter.chain"
+                or config_host.get("path") != "chain_browser_host.exe"
+                or config_host.get("allowed_origins") != ["chrome-extension://emedfcknbodikopedciihmfmbdabhefe/"]):
+            raise ValueError("Unexpected Chain browser host identity")
+        defines["BROWSER_HOST"] = "1"
     config = stage / "installer.nsi"
     config.write_text("; -*- coding: utf-8 -*-\n" +
         "\n".join(f'!define {k} "{escape(v)}"' for k, v in defines.items()) +
