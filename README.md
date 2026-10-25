@@ -56,3 +56,9 @@ flutter test --no-pub
 ```
 
 Fontes: [package_info_plus](https://pub.dev/packages/package_info_plus), [url_launcher](https://pub.dev/packages/url_launcher), [NSIS](https://nsis.sourceforge.io/Docs/).
+
+## Captura Chain / extensão
+
+O empacotador de Chain exige chain_browser_host.exe e chain-browser-host.json no Release (gerados por tool/prepare-browser.ps1 do app), com origem exata do Companion. NSIS registra NativeMessagingHosts em HKCU para Chrome/Edge; a desinstalação remove o registro apenas se ainda apontar para essa instalação. Build de teste não altera registros reais de navegadores. Outros apps não ganham ponte.
+
+O publicador aceita --notes-file e --title para notas específicas. --browser é restrito ao Chain Companion e publica ZIP verificado + hashes; a versão vem do package.json e o manifesto dentro do ZIP deve conferir. Não publica produto novo sem autorização. No feed, browser é uma plataforma adicional consumida pela extensão; o cliente Flutter continua selecionando Windows/Android do próprio app.
