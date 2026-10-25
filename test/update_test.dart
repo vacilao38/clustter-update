@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show PointerDeviceKind;
 import 'package:clustter_update/clustter_update.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +27,65 @@ class MemoryStore implements UpdateStore {
 }
 
 void main() {
+  testWidgets(
+    'builder banner supports hover and dismissal without replacing the current route',
+    (tester) async {
+      tester.view.physicalSize = const Size(1366, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final controller = UpdateController(
+        appId: 'chain',
+        platform: 'windows',
+        store: MemoryStore(),
+        currentVersion: () async => '1.0.0',
+        fetch: () async => feed('1.1.0'),
+      );
+      final nav = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: nav,
+          builder: (context, child) => ClustterUpdate(
+            appId: 'chain',
+            appName: 'Chain',
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: Text('Biblioteca')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      nav.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              const Scaffold(body: TextField(key: ValueKey('draft'))),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('draft')),
+        'Rascunho preservado',
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(
+        tester.getCenter(find.byTooltip('Lembrar apenas na próxima versão')),
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
+      expect(find.text('Lembrar apenas na próxima versão'), findsOneWidget);
+      expect(find.text('Rascunho preservado'), findsOneWidget);
+      await tester.tap(find.byTooltip('Lembrar apenas na próxima versão'));
+      await mouse.removePointer();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('1.1.0 está disponível'), findsNothing);
+      expect(find.text('Rascunho preservado'), findsOneWidget);
+      expect(nav.currentState!.canPop(), isTrue);
+      await tester.pumpWidget(const SizedBox.shrink());
+      controller.dispose();
+    },
+  );
   test('numeric versions, prereleases and Android ABI build numbers', () {
     final ordered = [
       '1.0.0-alpha',

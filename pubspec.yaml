@@ -1,6 +1,6 @@
 name: clustter_update
 description: "Protocolo Update da Clustter cores: aviso local e download pelo site."
-version: 1.0.0
+version: 1.0.1
 publish_to: none
 environment:
   sdk: ^3.12.1

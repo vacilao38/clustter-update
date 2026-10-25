@@ -97,72 +97,82 @@ class _ClustterUpdateState extends State<ClustterUpdate>
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      if (controller.showBanner)
-        Material(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: LayoutBuilder(
-                builder: (context, box) {
-                  final scheme = Theme.of(context).colorScheme;
-                  final message = Text(
-                    '${widget.appName} ${controller.available!.version} está disponível',
-                    style: TextStyle(
-                      color: scheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  );
-                  final download = TextButton.icon(
-                    onPressed: opening ? null : _open,
-                    icon: const Icon(Icons.open_in_new, size: 18),
-                    label: Text(opening ? 'Abrindo…' : 'Baixar no site'),
-                  );
-                  final close = IconButton(
-                    tooltip: 'Lembrar apenas na próxima versão',
-                    onPressed: controller.dismiss,
-                    icon: Icon(Icons.close, color: scheme.onPrimaryContainer),
-                  );
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (box.maxWidth < 560) ...[
-                        Row(
-                          children: [
-                            Expanded(child: message),
-                            close,
-                          ],
-                        ),
-                        Align(alignment: Alignment.centerLeft, child: download),
-                      ] else
-                        Row(
-                          children: [
-                            const Icon(Icons.system_update_alt),
-                            const SizedBox(width: 12),
-                            Expanded(child: message),
-                            download,
-                            close,
-                          ],
-                        ),
-                      if (openFailed)
-                        SelectableText(
-                          'Abra a página no navegador: ${controller.available!.page}',
-                          style: TextStyle(
-                            color: scheme.onPrimaryContainer,
-                            fontSize: 12,
+  Widget build(BuildContext context) => Overlay.wrap(
+    // MaterialApp.builder sits above Navigator's overlay. Give banner tooltips
+    // their own ancestor while keeping the navigator and its current route.
+    child: Column(
+      children: [
+        if (controller.showBanner)
+          Material(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    final scheme = Theme.of(context).colorScheme;
+                    final message = Text(
+                      '${widget.appName} ${controller.available!.version} está disponível',
+                      style: TextStyle(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                    final download = TextButton.icon(
+                      onPressed: opening ? null : _open,
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: Text(opening ? 'Abrindo…' : 'Baixar no site'),
+                    );
+                    final close = IconButton(
+                      tooltip: 'Lembrar apenas na próxima versão',
+                      onPressed: controller.dismiss,
+                      icon: Icon(Icons.close, color: scheme.onPrimaryContainer),
+                    );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (box.maxWidth < 560) ...[
+                          Row(
+                            children: [
+                              Expanded(child: message),
+                              close,
+                            ],
                           ),
-                        ),
-                    ],
-                  );
-                },
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: download,
+                          ),
+                        ] else
+                          Row(
+                            children: [
+                              const Icon(Icons.system_update_alt),
+                              const SizedBox(width: 12),
+                              Expanded(child: message),
+                              download,
+                              close,
+                            ],
+                          ),
+                        if (openFailed)
+                          SelectableText(
+                            'Abra a página no navegador: ${controller.available!.page}',
+                            style: TextStyle(
+                              color: scheme.onPrimaryContainer,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        ),
-      Expanded(child: widget.child),
-    ],
+        Expanded(child: widget.child),
+      ],
+    ),
   );
 }
