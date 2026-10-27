@@ -1,5 +1,7 @@
 # Clustter Update
 
+Bridge foi incluído na distribuição por autorização explícita de 27/10/2026. O publicador aceita seu id `bridge`; código permanece em repositório privado. Apps novos continuam exigindo autorização própria, além do registro na ferramenta.
+
 Componente compartilhado para todos os apps novos e versões futuras da Clustter cores. Windows e Android consultam apenas o catálogo público HTTPS, avisam dentro do app quando existe versão superior e abrem a página oficial para download. Não baixa nem executa instaladores automaticamente, não usa conta e não envia projetos, arquivos, identificadores de aparelho ou versão instalada ao servidor.
 
 ## Integrar

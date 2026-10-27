@@ -49,7 +49,7 @@ def main():
         pubspec = (project / "pubspec.yaml").read_text(encoding="utf-8")
         app_id = re.search(r"(?m)^name:\s*([a-z][a-z0-9_]*)\s*$", pubspec)[1]
         version = re.search(r"(?m)^version:\s*(\d+\.\d+\.\d+)\+\d+\s*$", pubspec)[1]
-        if app_id not in {"folk", "lake", "chain", "noon", "pile"}:
+        if app_id not in {"folk", "lake", "chain", "noon", "pile", "bridge"}:
             raise ValueError("New catalog products require explicit publication authorization and tooling registration")
         folder = project / f"dist/{version}"
         installer = json.loads((folder / "installer.json").read_text(encoding="utf-8"))
